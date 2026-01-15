@@ -16,8 +16,8 @@ func GetAllUser() ([]models.User, error) {
 	return repositories.GetAllUser()
 }
 
-func GetUserPaginate(limit int, offset int) ([]models.User, int64, error) {
-	return repositories.GetPaginateUser(limit, offset)
+func GetUserPaginate(limit int, offset int, search string) ([]models.User, int64, error) {
+	return repositories.GetPaginateUser(limit, offset, search)
 }
 
 func GetUserByID(id int) (*models.User, error) {

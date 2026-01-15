@@ -14,6 +14,7 @@ import (
 func UserIndex(c *gin.Context) {
 	page := 1
 	limit := 10
+	search := c.Query("search")
 
 	if p := c.Query("page"); p != "" {
 		page, _ = strconv.Atoi(p)
@@ -28,7 +29,7 @@ func UserIndex(c *gin.Context) {
 	}
 	offset := (page - 1) * limit
 
-	users, total, err := services.GetUserPaginate(limit, offset)
+	users, total, err := services.GetUserPaginate(limit, offset, search)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed get users"})
@@ -106,6 +107,7 @@ func CreateUser(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot create user"})
+		return
 	} else {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "user created",

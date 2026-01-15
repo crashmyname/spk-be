@@ -16,15 +16,27 @@ func GetAllUser() ([]models.User, error) {
 	return users, err
 }
 
-func GetPaginateUser(limit int, offset int) ([]models.User, int64, error) {
+func GetPaginateUser(limit int, offset int, search string) ([]models.User, int64, error) {
 	var users []models.User
 	var total int64
 
-	if err := database.DB.Model(&models.User{}).Count(&total).Error; err != nil {
+	query := database.DB.Model(&models.User{})
+
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where("name LIKE ? OR username LIKE ? OR email LIKE ?",
+			like, like, like)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	if err := database.DB.Limit(limit).Offset(offset).Order("user_id DESC").Find(&users).Error; err != nil {
+	if err := query.
+		Order("user_id DESC").
+		Limit(limit).
+		Offset(offset).
+		Find(&users).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -77,7 +89,7 @@ func DeleteUser(id int) (*models.User, error) {
 		return nil, err
 	}
 
-	if err := database.DB.Model(&user).Delete(id).Error; err != nil {
+	if err := database.DB.Delete(&user).Error; err != nil {
 		return nil, err
 	}
 
