@@ -9,6 +9,10 @@ func GetAllTicket() ([]models.Ticket, error) {
 	return repositories.GetAllTicket()
 }
 
+func GetTicketPaginate(limit int, offset int, search string) ([]models.Ticket, int64, error) {
+	return repositories.GetPaginateTicket(limit, offset, search)
+}
+
 func GetTicketByID(id int) (models.Ticket, error) {
 	return repositories.GetTicketByID(id)
 }

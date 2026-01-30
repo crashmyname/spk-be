@@ -42,13 +42,9 @@ import (
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var token string
-
-		// 1️⃣ Coba dari cookie
 		if cookieToken, err := c.Cookie("access_token"); err == nil {
 			token = cookieToken
 		}
-
-		// 2️⃣ Fallback ke Authorization header
 		if token == "" {
 			authHeader := c.GetHeader("Authorization")
 			if strings.HasPrefix(authHeader, "Bearer ") {

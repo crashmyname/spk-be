@@ -13,13 +13,6 @@ func RegisterRoutes(r *gin.Engine) {
 	api.GET("/users", controllers.UserIndex)
 	api.POST("/auth/login", controllers.Login)
 
-	// Material
-	api.GET("/material", controllers.MaterialIndex)
-	api.GET("/material/:id", controllers.GetMaterialByID)
-	api.POST("/material", controllers.CreateMaterial)
-	api.PATCH("/material/:id", controllers.UpdateMaterial)
-	api.DELETE("/material/:id", controllers.DeleteMaterial)
-
 	api.GET("/home", controllers.HomeIndex)
 
 	auth := api.Group("/")
@@ -28,10 +21,20 @@ func RegisterRoutes(r *gin.Engine) {
 		auth.GET("/me", controllers.Me)
 		auth.POST("/auth/logout", controllers.Logout)
 
+		/** User */
 		auth.GET("/user/name", controllers.GetNameUser)
 		auth.GET("/user/:id", controllers.GetUserByID)
 		auth.POST("/users", controllers.CreateUser)
 		auth.PUT("/user/:id", controllers.UpdateUser)
 		auth.DELETE("/user/:id", controllers.DeleteUser)
+		auth.GET("/users/xlsx", controllers.ExportExcelUser)
+		auth.GET("/users/pdf", controllers.ExportPDFUser)
+
+		/** Material */
+		auth.GET("/materials", controllers.MaterialPaginate)
+		auth.GET("/material/:id", controllers.GetMaterialByID)
+		auth.POST("/materials", controllers.CreateMaterial)
+		auth.PUT("/material/:id", controllers.UpdateMaterial)
+		auth.DELETE("/material/:id", controllers.DeleteMaterial)
 	}
 }

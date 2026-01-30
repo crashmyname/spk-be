@@ -16,10 +16,32 @@ func GetAllMaterial() ([]models.Material, error) {
 	return material, err
 }
 
-func GetMaterialByID(id int) (*models.Material, error) {
+func GetPaginateMaterial(limit int, offset int, search string) ([]models.Material, int64, error) {
+	var materials []models.Material
+	var total int64
+
+	query := database.DB.Model(&models.Material{})
+
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where("mold_number LIKE ? OR lamp_name LIKE ? OR model_name LIKE ? OR type LIKE ?", like, like, like, like)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Order("material_id DESC").Limit(limit).Offset(offset).Find(&materials).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return materials, total, nil
+}
+
+func GetMaterialByID(id string) (*models.Material, error) {
 	var material models.Material
 
-	if err := database.DB.Where("material_id = ?", id).First(&material).Error; err != nil {
+	if err := database.DB.Where("mold_number= ?", id).First(&material).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, err
 		}
@@ -33,7 +55,7 @@ func CreateMaterial(material *models.Material) error {
 	return database.DB.Create(material).Error
 }
 
-func UpdateMaterial(id int, data map[string]interface{}) (*models.Material, error) {
+func UpdateMaterial(id string, data map[string]interface{}) (*models.Material, error) {
 	var material models.Material
 
 	if err := database.DB.First(&material, id).Error; err != nil {
@@ -54,7 +76,7 @@ func DeleteMaterial(id int) (*models.Material, error) {
 		return nil, err
 	}
 
-	if err := database.DB.Model(&material).Delete(id).Error; err != nil {
+	if err := database.DB.Delete(&material).Error; err != nil {
 		return nil, err
 	}
 

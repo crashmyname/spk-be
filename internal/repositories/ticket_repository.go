@@ -15,6 +15,28 @@ func GetAllTicket() ([]models.Ticket, error) {
 	return tickets, nil
 }
 
+func GetPaginateTicket(limit int, offset int, search string) ([]models.Ticket, int64, error) {
+	var tickets []models.Ticket
+	var total int64
+
+	query := database.DB.Model(&models.Ticket{})
+
+	if search != "" {
+		like := "%" + search + "%"
+		query = query.Where("no_order LIKE ? OR date_create LIKE ? OR action LIKE ? OR type_ticket LIKE ?", like, like, like, like)
+	}
+
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := query.Order("ticket_id DESC").Limit(limit).Offset(offset).Find(&tickets).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return tickets, total, nil
+}
+
 func GetTicketByID(id int) (models.Ticket, error) {
 	var tickets models.Ticket
 

@@ -5,11 +5,21 @@ import (
 	"spk-be/internal/database"
 	"spk-be/internal/models"
 	"spk-be/internal/utils"
+	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-var attempts = make(map[string]int)
+type LoginAttempt struct {
+	Count   int
+	LastTry time.Time
+}
+
+var (
+	attempts = make(map[string]*LoginAttempt)
+	mu       = sync.Mutex{}
+)
 
 func Login(c *gin.Context) {
 	var input struct {
@@ -22,27 +32,37 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	if attempts[input.Username] >= 5 {
-		c.JSON(http.StatusTooManyRequests, gin.H{
-			"error": "Too many login attempts, try again later",
-		})
-		return
+	mu.Lock()
+	attempt, exists := attempts[input.Username]
+	if exists {
+		if time.Since(attempt.LastTry) > 15*time.Minute {
+			delete(attempts, input.Username)
+		} else if attempt.Count >= 5 {
+			mu.Unlock()
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error": "Too many login attempts, try again later",
+			})
+			return
+		}
 	}
+	mu.Unlock()
 
 	var user models.User
 	if err := database.DB.Where("username = ?", input.Username).First(&user).Error; err != nil {
-		attempts[input.Username]++
+		recordFailedAttempt(input.Username)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User Not found"})
 		return
 	}
 
 	if err := utils.CheckPassword(user.Password, input.Password); err != nil {
-		attempts[input.Username]++
+		recordFailedAttempt(input.Username)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "wrong password"})
 		return
 	}
 
+	mu.Lock()
 	delete(attempts, input.Username)
+	mu.Unlock()
 
 	token, _ := utils.GenerateJWT(user.ID)
 
@@ -67,6 +87,21 @@ func Login(c *gin.Context) {
 			"section":  user.Section,
 		},
 	})
+}
+
+func recordFailedAttempt(username string) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if _, exists := attempts[username]; !exists {
+		attempts[username] = &LoginAttempt{
+			Count:   1,
+			LastTry: time.Now(),
+		}
+	} else {
+		attempts[username].Count++
+		attempts[username].LastTry = time.Now()
+	}
 }
 
 func Logout(c *gin.Context) {

@@ -7,3 +7,7 @@ type Material struct {
 	ModelName  string `json:"model_name"`
 	Type       string `json:"type"`
 }
+
+func (Material) TableName() string {
+	return "material"
+}

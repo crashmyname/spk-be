@@ -191,3 +191,34 @@ func DeleteUser(c *gin.Context) {
 		"message": "delete success",
 	})
 }
+
+func ExportExcelUser(c *gin.Context) {
+	file, err := services.ExportExcelUser()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "Error",
+		})
+		return
+	}
+
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=users.xlsx")
+
+	file.Write(c.Writer)
+}
+
+func ExportPDFUser(c *gin.Context) {
+	pdf, err := services.ExportPDFUser()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": "error",
+		})
+		return
+	}
+
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", "attachment; filename=users.pdf")
+
+	c.Data(200, "application/pdf", pdf)
+
+}

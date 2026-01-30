@@ -95,3 +95,13 @@ func DeleteUser(id int) (*models.User, error) {
 
 	return &user, nil
 }
+
+func ExportUser() ([]models.User, error) {
+	var users []models.User
+
+	if err := database.DB.Find(&users).Error; err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
